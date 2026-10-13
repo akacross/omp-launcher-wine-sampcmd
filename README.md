@@ -1,6 +1,6 @@
-> **This is a Wine/Proton compatibility pass** on [open.mp launcher](https://github.com/openmultiplayer/launcher)
+> **This is a Wine/Proton compatibility pass, plus starting games through [sampcmd](https://gitlab.com/akacross/sampcmd)** on [open.mp launcher](https://github.com/openmultiplayer/launcher)
 > (v1.6.1), for running it on Linux. Every change is in [WINE-BUILD.md](WINE-BUILD.md):
-> what broke under Wine, why, and the fix. The in-game server browser also needs
+> what broke under Wine, why, and the fix. Without sampcmd: [omp-launcher-wine](https://github.com/akacross/omp-launcher-wine). The in-game server browser also needs
 > [`ompoverlay.asi`](https://github.com/akacross/omp-ingame-browser-wine) in the game
 > folder; the whole setup (prefix, WebView2, launch script) is in
 > [samp-openmp-linux](https://github.com/akacross/samp-openmp-linux). Outside Wine the

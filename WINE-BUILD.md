@@ -37,6 +37,23 @@ shows nothing from a child window owned by another process, and WebView2's
 content window belongs to `msedgewebview2.exe`. Blank with GPU and with
 software rendering, though Chromium renders fine.
 
+## Starting games through sampcmd
+
+This repository's addition over the plain Wine pass. With `OMP_SAMPCMD` set
+(sampcmd.exe, absolute or relative to the game folder), the launcher starts
+games as
+
+```
+sampcmd.exe $OMP_SAMPCMD_ARGS --game-dir <game> [--exe <custom>] --dll <samp.dll> --omp --omp-dll <omp-client.dll> -- -c -n <name> -h <ip> -p <port> [-z <password>]
+```
+
+and leaves the injection to [sampcmd](https://gitlab.com/akacross/sampcmd), so
+its monitoring, crash capture and host checks apply. The DLLs are the same
+ones the launcher would inject itself (`src-tauri/src/injector.rs`). Unset or
+empty, the launcher injects as upstream does. `OMP_SAMPCMD_ARGS` is split on
+whitespace (no quoting), e.g. `--monitor --verbose --full-dump`. sampcmd keeps
+running beside the game; the launcher does not wait for it.
+
 ## The in-game browser
 
 omp-client.dll asks the launcher (IPC on 127.0.0.1:45791, `show_overlay:<pid>`)

@@ -35,6 +35,18 @@ pub async fn run_samp(
     password: &str,
     custom_game_exe: &str,
 ) -> Result<()> {
+    // Optional (WINE-BUILD.md): start the game through sampcmd. OMP_SAMPCMD names
+    // sampcmd.exe (absolute, or relative to the game folder), OMP_SAMPCMD_ARGS
+    // holds its own options. sampcmd then starts the game and injects the same
+    // samp.dll and omp-client.dll this launcher would have, adding its own
+    // monitoring, crash capture and host checks. Unset, nothing changes.
+    if let Ok(sampcmd) = std::env::var("OMP_SAMPCMD") {
+        if !sampcmd.trim().is_empty() {
+            return run_via_sampcmd(sampcmd.trim(), name, ip, port, executable_dir, dll_path,
+                                   omp_file, password, custom_game_exe);
+        }
+    }
+
     // Prepare the command to spawn the executable
     let target_game_exe = if custom_game_exe.len() > 0 {
         custom_game_exe.to_string()
@@ -94,6 +106,55 @@ pub async fn run_samp(
                     e
                 ))),
             }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[allow(clippy::too_many_arguments)]
+fn run_via_sampcmd(
+    sampcmd: &str,
+    name: &str,
+    ip: &str,
+    port: i32,
+    executable_dir: &str,
+    dll_path: &str,
+    omp_file: &str,
+    password: &str,
+    custom_game_exe: &str,
+) -> Result<()> {
+    let sampcmd_path = if std::path::Path::new(sampcmd).is_absolute() {
+        sampcmd.to_string()
+    } else {
+        format!("{}/{}", executable_dir, sampcmd)
+    };
+    let mut cmd = Command::new(&sampcmd_path);
+    if let Ok(extra) = std::env::var("OMP_SAMPCMD_ARGS") {
+        cmd.args(extra.split_whitespace());
+    }
+    cmd.arg("--game-dir").arg(executable_dir);
+    if !custom_game_exe.is_empty() {
+        cmd.arg("--exe").arg(custom_game_exe);
+    }
+    cmd.arg("--dll").arg(dll_path).arg("--omp").arg("--omp-dll").arg(omp_file);
+    cmd.arg("--")
+        .arg("-c")
+        .arg("-n")
+        .arg(name)
+        .arg("-h")
+        .arg(ip)
+        .arg("-p")
+        .arg(format!("{}", port));
+    if !password.is_empty() {
+        cmd.arg("-z").arg(password);
+    }
+
+    info!("[injector.rs] Starting the game through {}", sampcmd_path);
+    match cmd.current_dir(executable_dir).spawn() {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            info!("[injector.rs] sampcmd failed to start: {}", e);
+            Err(LauncherError::Process(format!("Failed to start {}: {}", sampcmd_path, e)))
         }
     }
 }
