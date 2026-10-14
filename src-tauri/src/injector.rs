@@ -136,7 +136,11 @@ fn run_via_sampcmd(
     if !custom_game_exe.is_empty() {
         cmd.arg("--exe").arg(custom_game_exe);
     }
-    cmd.arg("--dll").arg(dll_path).arg("--omp").arg("--omp-dll").arg(omp_file);
+    cmd.arg("--dll").arg(dll_path);
+    // empty with --no-omp
+    if !omp_file.is_empty() {
+        cmd.arg("--omp").arg("--omp-dll").arg(omp_file);
+    }
     cmd.arg("--")
         .arg("-c")
         .arg("-n")
